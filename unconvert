@@ -1,0 +1,21 @@
+PID=$$
+echo "Rolling back converted files"
+echo "   * Locating files to rollback"
+
+find . -name "*.py.bak"  -print > $PID 
+files=`cat $PID | wc -l | sed 's/ //g'`
+echo "      * Found $files file(s) to process"
+
+echo "   * Processing files"
+
+while IFS= read -r line; do
+    filename=`echo $line | sed 's/py:.*/py/g'` 
+    filename2=`echo $filename | sed 's/.bak//'`
+    echo "      * Processing file: $filename"
+    echo "        * Rolling back $filename to $filename2"
+    mv $filename $filename2
+    echo "        * Completed $filename"
+done < $PID
+echo "   * Clearing up"
+rm $PID
+echo "Rolling back file conversion complete"

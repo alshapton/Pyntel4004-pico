@@ -1,0 +1,22 @@
+
+PID=$$
+echo "Converting to Pyntel Pico format"
+
+echo "  * Determining list of files to process"
+find . -name "*.py"  -print | xargs grep "from typing import" > $PID
+find . -name "*.py"  -print | xargs grep "os.sep" >> $PID
+files=`cat $PID | sort | uniq | wc -l | sed 's/ //g'`
+echo "    Found $files file(s) to process"
+# Process each file
+while IFS= read -r line; do
+    filename=`echo $line | sed 's/py:.*/py/g'` 
+    echo "      * Processing file: $filename"
+    echo "        * Backing up $filename to $filename.bak"
+    mv $filename $filename.bak
+    echo "        * Converting $filename"
+    cat $filename.bak | grep -v "from typing import"  | sed 's/ -> Tuple.*/:/g' | sed "s/os\.sep/'\/'/g" | sed 's/# Import typing library//g'| sed 's/: Any//g '> $filename
+    echo "        * Completed $filename"
+done < $PID
+echo "  * Cleaning up"
+rm $PID
+echo "Completed conversion"
