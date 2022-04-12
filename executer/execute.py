@@ -136,6 +136,7 @@ def process_instruction(chip: Processor, breakpoints: list, _tps: list,
                 monitor_command = input(prompt).lower()
             else:
                 monitor_command = ''
+
             result, monitor, monitor_command, opcode = \
                 deal_with_monitor_command(chip, monitor_command,
                                           breakpoints, monitor, opcode)
@@ -180,6 +181,22 @@ def dispatch2(operations: list, command: str, p1: int, p2: int):
     function with 2 parameters
     """
     return operations[command](p1, p2)
+
+
+def prep_single_instruction(exe: str, const_chip, str):
+    command = exe.replace(const_chip, '')[:3]
+    params = exe.replace(const_chip, '')[3:].replace('(', '').replace(')', '')
+    splitparams = params.split(',')
+    counter = 0
+    p1 = None
+    p2 = None
+    for i in splitparams:
+        if counter == 0 and i is not None:
+            p1 = i
+        if counter == 1 and i is not None:
+            p2 = i
+        counter = counter + 1
+    return command, splitparams, p1, p2
 
 
 def execute(chip: Processor, location: str, pc: int, monitor: bool,
@@ -243,26 +260,14 @@ def execute(chip: Processor, location: str, pc: int, monitor: bool,
             # Execute instruction
             exe = const_chip + translate_mnemonic(chip, _tps, exe, opcode,
                                                   'E', 0, quiet)
-            command = exe.replace(const_chip, '')[:3]
-            params = exe.replace(const_chip, '')[3:].\
-                replace('(', '').replace(')', '')
-            splitparams = params.split(',')
-            counter = 0
-            p1 = None
-            p2 = None
-            for i in splitparams:
-                if counter == 0 and i is not None:
-                    p1 = i
-                if counter == 1 and i is not None:
-                    p2 = i
-                counter = counter + 1
+            command, splitparams, p1, p2 = \
+                prep_single_instruction(exe, const_chip, )
             if splitparams == ['']:
                 _ = dispatch0(operations, command)
             elif p2 is None and p1 is not None:
                 _ = dispatch1(operations, command, int(p1))
             elif p2 is not None:
                 _ = dispatch2(operations, command, int(p1), int(p2))
-        
     except Exception as ex:
         process_coredump(chip, ex)
         return False

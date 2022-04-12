@@ -1,2 +1,2 @@
 # Pyntel4004-pico
-uPython implementation of Pyntel
+uPython implementation of Pyntel4004
